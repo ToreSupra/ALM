@@ -7,8 +7,8 @@ import re
 
 class AQ6375Lan(AQ6375):
 
-    def __init__(self, host: str, port: int = 10001, username: str = "anonymous", password: str = ""):
-
+    def __init__(self, host: str, port: int = 10001, username: str = "anonymous", password: str = "", verbose: bool = False):
+        self.verbose = verbose
         resource_string = f"TCPIP0::{host}::{port}::SOCKET"
 
         adapter = VISAAdapter(
@@ -19,29 +19,32 @@ class AQ6375Lan(AQ6375):
             chunk_size=1024 * 1024,
         )
 
-        self._authenticate(adapter, username, password)
+        self._authenticate(adapter, username, password, self.verbose)
 
         warnings.filterwarnings("ignore", category=FutureWarning, module="pymeasure")
         # Call the top-level Instrument.__init__ directly, skipping AQ6370Series
         Instrument.__init__(self, adapter, "Yokogawa AQ6375", includeSCPI=True)
 
     @staticmethod
-    def _authenticate(adapter, username: str, password: str) -> None:
+    def _authenticate(adapter, username: str, password: str, verbose: bool) -> None:
         adapter.write(f'OPEN "{username}"')
         challenge = adapter.read()
-        print(f"Auth challenge: {challenge.strip()}")
+        if verbose:
+            print(f"Auth challenge: {challenge.strip()}")
 
         if "authenticate" not in challenge.strip().lower():
             raise ConnectionError(f"Unexpected auth response: {challenge!r}")
 
         adapter.write(password)
         result = adapter.read()
-        print(f"Auth result: {result.strip()}")
+        if verbose:
+            print(f"Auth result: {result.strip()}")
 
         if "ready" not in result.strip().lower():
             raise ConnectionError(f"Authentication failed: {result!r}")
 
-        print("Authentication successful.")
+        if verbose:
+            print("Authentication successful.")
 
     def close(self) -> None:
         try:
@@ -57,7 +60,8 @@ class AQ6375Lan(AQ6375):
         :param timeout_s: Maximum time to wait for sweep completion in seconds.
         :param poll_s:    Polling interval in seconds.
         """
-        print("Starting single sweep …")
+        if self.verbose:
+            print("Starting single sweep …")
         self.write(":INITiate:SMODe SINGle")
         self.write(":INITiate")
 
@@ -80,7 +84,8 @@ class AQ6375Lan(AQ6375):
             time.sleep(poll_s)
             elapsed += poll_s
             if int(self.ask(":STATus:OPERation:CONDition?")) & 0x01:
-                print(f"  Sweep complete ({elapsed:.0f} s)")
+                if self.verbose:
+                    print(f"  Sweep complete ({elapsed:.0f} s)")
                 break
         else:
             raise TimeoutError(f"Sweep did not finish within {timeout_s} s")
@@ -132,7 +137,8 @@ class AQ6375Lan(AQ6375):
 
         cmd = f':MMEMory:STORe:TRACe {trace},{fmt},"{filename}",EXTernal'
         self.write(cmd)
-        print(f"Trace {trace} saved to USB as '{filename}.{fmt.lower()}'")
+        if self.verbose:
+            print(f"Trace {trace} saved to USB as '{filename}.{fmt.lower()}'")
 
     def list_usb_files(self, directory: str = "") -> list[dict]:
         """
@@ -171,7 +177,8 @@ class AQ6375Lan(AQ6375):
         file_count = int(parts[1])
         filenames  = parts[2:2 + file_count]
 
-        print(f"USB free space: {free_kb / 1024:.1f} MB — {file_count} file(s) found")
+        if self.verbose:
+            print(f"USB free space: {free_kb / 1024:.1f} MB — {file_count} file(s) found")
 
         return [{"name": name.strip(), "free_kb": free_kb} for name in filenames]
     
@@ -203,7 +210,8 @@ class AQ6375Lan(AQ6375):
             raise OverflowError("USB file counter exceeded W9999.CSV — please archive and clear files.")
 
         filename = f"W{next_number:04d}.CSV"
-        print(f"Next filename: {filename}")
+        if self.verbose:
+            print(f"Next filename: {filename}")
         return filename
     
     def set_analysis_range(self, mode: str) -> None:
@@ -227,7 +235,8 @@ class AQ6375Lan(AQ6375):
 
         scpi_value = "ON" if mode == "markers" else "OFF"
         self.write(f":CALCulate:LMARker:SRANge {scpi_value}")
-        print(f"Analysis range set to: {'L1–L2 marker region' if mode == 'markers' else 'full sweep'}")
+        if self.verbose:
+            print(f"Analysis range set to: {'L1–L2 marker region' if mode == 'markers' else 'full sweep'}")
 
 
     def set_line_marker(self, marker: int, wavelength_m: float) -> None:
@@ -244,7 +253,8 @@ class AQ6375Lan(AQ6375):
             raise ValueError(f"Line marker must be 1 or 2, got {marker!r}")
 
         self.write(f":CALCulate:LMARker:X {marker},{wavelength_m:.6E}M")
-        print(f"Line marker L{marker} set at {wavelength_m * 1e9:.4f} nm")
+        if self.verbose:
+            print(f"Line marker L{marker} set at {wavelength_m * 1e9:.4f} nm")
 
 
     def get_analysis_range(self) -> str:
@@ -257,7 +267,8 @@ class AQ6375Lan(AQ6375):
         """
         response = self.ask(":CALCulate:LMARker:SRANge?")
         mode = "markers" if response.strip() == "1" else "full"
-        print(f"Analysis range: {mode}")
+        if self.verbose:
+            print(f"Analysis range: {mode}")
         return mode
     
     # Valid sensitivity modes for the AQ6375
@@ -305,7 +316,8 @@ class AQ6375Lan(AQ6375):
         # Map NORMAL → NORMal for the SCPI command
         scpi_value = "NORMal" if mode == "NORMAL" else mode
         self.write(f":SENSe:SENSe {scpi_value}")
-        print(f"Sensitivity set to: {mode}  ({self.AQ6375_SENSITIVITY_MODES[mode]})")
+        if self.verbose:
+            print(f"Sensitivity set to: {mode}  ({self.AQ6375_SENSITIVITY_MODES[mode]})")
 
 
     def get_sensitivity(self) -> str:
@@ -328,7 +340,8 @@ class AQ6375Lan(AQ6375):
             "6": "NORMAL",
         }
         mode = code_map.get(response.strip(), response.strip())
-        print(f"Current sensitivity: {mode}")
+        if self.verbose:
+            print(f"Current sensitivity: {mode}")
         return mode
     # Valid trace attribute modes for the AQ6375
     AQ6375_TRACE_MODES = {
@@ -367,7 +380,8 @@ class AQ6375Lan(AQ6375):
 
         scpi_value, description = self.AQ6375_TRACE_MODES[mode]
         self.write(f":TRACe:ATTRibute:{trace} {scpi_value}")
-        print(f"Trace {trace} set to {mode} — {description}")
+        if self.verbose:
+            print(f"Trace {trace} set to {mode} — {description}")
 
 
     def get_trace_mode(self, trace: str) -> str:
@@ -387,7 +401,8 @@ class AQ6375Lan(AQ6375):
         # Instrument returns numeric code: 0=WRITE, 1=FIX, 2=MAX, 3=MIN
         code_map = {"0": "WRITE", "1": "FIX", "2": "MAX", "3": "MIN"}
         mode = code_map.get(response.strip(), response.strip())
-        print(f"Trace {trace} mode: {mode}")
+        if self.verbose:
+            print(f"Trace {trace} mode: {mode}")
         return mode
     
     def set_auto_zero(self, enabled: bool) -> None:
@@ -407,7 +422,8 @@ class AQ6375Lan(AQ6375):
         """
         value = "ON" if enabled else "OFF"
         self.write(f":CALibration:ZERO {value}")
-        print(f"Auto zero calibration: {'enabled' if enabled else 'disabled'}")
+        if self.verbose:
+            print(f"Auto zero calibration: {'enabled' if enabled else 'disabled'}")
 
 
     def get_auto_zero(self) -> bool:
@@ -420,7 +436,8 @@ class AQ6375Lan(AQ6375):
         """
         response = self.ask(":CALibration:ZERO?")
         enabled = response.strip() == "1"
-        print(f"Auto zero calibration: {'enabled' if enabled else 'disabled'}")
+        if self.verbose:
+            print(f"Auto zero calibration: {'enabled' if enabled else 'disabled'}")
         return enabled
 
 
@@ -435,7 +452,8 @@ class AQ6375Lan(AQ6375):
         Manual ref: :CALibration:ZERO ONCE
         """
         self.write(":CALibration:ZERO ONCE")
-        print("Zero calibration triggered (once)")
+        if self.verbose:
+            print("Zero calibration triggered (once)")
 
 
     def get_zero_status(self) -> bool:
@@ -448,7 +466,8 @@ class AQ6375Lan(AQ6375):
         """
         response = self.ask(":CALibration:ZERO:STATus?")
         running = response.strip() == "1"
-        print(f"Zero calibration {'in progress' if running else 'idle'}")
+        if self.verbose:
+            print(f"Zero calibration {'in progress' if running else 'idle'}")
         return running
     
     def calculate_wdm_snr(self, trace: str = "TRA") -> list[float]:
@@ -485,20 +504,48 @@ class AQ6375Lan(AQ6375):
 
         # Step 4 — check how many channels were detected
         n_channels = int(self.ask(":CALCulate:DATA:NCHannels?"))
-        print(f"  WDM channels detected: {n_channels}")
+        if self.verbose:
+            print(f"  WDM channels detected: {n_channels}")
 
         if n_channels == 0:
-            print("  Warning: no channels detected — check threshold and trace")
+            if self.verbose:
+                print("  Warning: no channels detected — check threshold and trace")
             return []
 
         # Step 5 — retrieve SNR for each channel
         raw = self.ask(":CALCulate:DATA:CSNR?")
         snr_values = [float(v) for v in raw.split(",")]
 
-        for i, snr in enumerate(snr_values):
-            print(f"  Channel {i+1}: SNR = {snr:.2f} dB")
+        if self.verbose:
+            for i, snr in enumerate(snr_values):
+                print(f"  Channel {i+1}: SNR = {snr:.2f} dB")
 
         return snr_values
+    
+    def is_usb_connected(self) -> bool:
+        """
+        Check whether a USB flash drive is connected to the OSA.
+
+        :param verbose: If True, print status messages (default False).
+        :returns:       True if a USB drive is present and accessible.
+        """
+        try:
+            response = self.ask(":MMEMory:CATalog? EXTernal")
+            parts = response.strip().split(",")
+            if len(parts) >= 2:
+                float(parts[0])
+                if self.verbose:
+                    print("USB drive detected.")
+                return True
+            else:
+                if self.verbose:
+                    print("USB drive not detected (unexpected response).")
+                return False
+
+        except Exception:
+            if self.verbose:
+                print("USB drive not detected (query error).")
+            return False
 
 
 if __name__ == "__main__":
