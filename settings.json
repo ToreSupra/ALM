@@ -1,0 +1,31 @@
+{
+    "pm": {
+        "sn": "P0009993",
+        "wl": 1575
+    },
+    "skyline": {
+        "cp": "COM14",
+        "P3_max_current": 5.0,
+        "P3_min_current": 1.0,
+        "P3_step_current": 0.5,
+        "P3_warmup_current": 1.0,
+        "warmup_time": 60,
+        "settling_time": 10
+    },
+    "osa": {
+        "ip_address": "192.168.1.100",
+        "port": 20001,
+        "coarse_min_wl": 1500,
+        "coarse_max_wl": 2000,
+        "coarse_sens": "HIGH1",
+        "coarse_res": 1,
+        "coarse_mk1": 1759,
+        "coarse_mk2": 1764
+    },
+    "att": {
+        "cp": "COM3",
+        "min": 0,
+        "max": 30,
+        "step": 5
+    }
+}

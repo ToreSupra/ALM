@@ -1,0 +1,21 @@
+{
+    "pm": {
+        "sn": "P0016818",
+        "wl": 1762
+    },
+    "skyline": {
+        "cp": "COM14",
+        "P3_max_current": 5.0,
+        "P3_min_current": 1.0,
+        "P3_step_current": 0.5,
+        "P3_warmup_current": 1.0,
+        "warmup_time": 60,
+        "settling_time": 15
+    },
+    "att": {
+        "cp": "COM3",
+        "min": 0,
+        "max": 30,
+        "step": 5
+    }
+}
