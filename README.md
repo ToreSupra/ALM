@@ -8,11 +8,19 @@ In order to communicate with the laser using a USB port a new driver needs to be
 
 The Yokogawa needs to be configured for an Ethernet connection.
 The parameters can be accessed through the front panel of your OSA:
--
+- Remote interface: Ethernet
+- Remote port: 20001
+- IP address: Manual, 192.168.1.100
+- Subnet mask: 255.255.255.0
+- Default gateway: 192.168.1.50 (the IP address of your computer)
+
+You computer needs to be configured with the following parameters:
+- IP address: 192.168.1.50
+- Subnet mask: 255.255.255.0
 
 ## Thorlabs power meter
 
-No driver is required. Just connect the device through USB.
+You need to install the "Optical Parameter Monitor" from Thorlabs.
 
 ## OZOptics attenuator
 
@@ -49,7 +57,7 @@ To install python packages (outside the environment):
 To install python packages (inside the environment):
 pip install libusb-package PyUSB pyvisa-py pymeasure openpyxl pylablib
 
-Packages to be installed: libusb-package PyUSB pyvisa-py pymeasure usb1 openpyxl
+Packages to be installed: libusb-package PyUSB pyvisa-py pymeasure libusb1 openpyxl
 
 Potentially if necessary:
 pip install --upgrade toptica_lasersdk
