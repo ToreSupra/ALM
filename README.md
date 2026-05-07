@@ -44,14 +44,15 @@ Then only you can work!!!!
 ### Packages
 
 To install python packages (outside the environment):
-
-& c:/Users/RomanoC/VS_Code/ALM/.venv/Scripts/python.exe -m pip install libusb-package PyUSB pyvisa-py pymeasure usb1 openpyxl
-& c:/Users/RomanoC/VS_Code/ALM/.venv/Scripts/python.exe -m pip install --upgrade toptica_lasersdk
+& c:/Users/RomanoC/VS_Code/ALM/.venv/Scripts/python.exe -m pip install package1 package2
 
 To install python packages (inside the environment):
+pip install libusb-package PyUSB pyvisa-py pymeasure openpyxl pylablib
 
-pip install libusb-package PyUSB pyvisa-py pymeasure openpyxl
-pylablib
+Packages to be installed: libusb-package PyUSB pyvisa-py pymeasure usb1 openpyxl
+
+Potentially if necessary:
+pip install --upgrade toptica_lasersdk
 
 ### LibUSB
 
