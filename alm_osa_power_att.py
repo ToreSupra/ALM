@@ -526,12 +526,17 @@ def state_measure_spectrum(ctx: Context) -> State:
     ratio = (10 ** ((float(result_in) - float(result_out))/10)) * 100 # [%]
     ctx.ws.cell(row=ctx.ws_row, column=5, value=ratio)
 
+    ctx.osa.set_analysis_range("markers")
     snr_list = ctx.osa.calculate_wdm_snr()
+    ctx.osa.set_analysis_range("full")
     snr = max(snr_list) if snr_list else ""
     ctx.ws.cell(row=ctx.ws_row, column=6, value=snr)
 
+    present = ctx.osa.is_signal_present(ctx.osa_coarse_mk1, ctx.osa_coarse_mk2, -60)
+    ctx.ws.cell(row=ctx.ws_row, column=7, value="Y" if present else "N")
+
     filename = ctx.osa.next_usb_filename()
-    ctx.ws.cell(row=ctx.ws_row, column=7, value=filename)
+    ctx.ws.cell(row=ctx.ws_row, column=8, value=filename)
     ctx.osa.save_trace_to_usb(filename=filename.replace(".CSV", ""))
 
     ctx.ws_row += 1

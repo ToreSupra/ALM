@@ -546,6 +546,76 @@ class AQ6375Lan(AQ6375):
             if self.verbose:
                 print("USB drive not detected (query error).")
             return False
+    
+    def is_signal_present(self,
+                      marker1_nm: float,
+                      marker2_nm: float,
+                      threshold_dBm: float = -40.0,
+                      trace: str = "TRA") -> bool:
+        """
+        Detect whether an optical signal is present between two wavelengths
+        using a peak search on the moving marker (marker 0).
+
+        Method:
+        1. Set line markers L1/L2 to define the search region
+        2. Enable SEARCH/ANA L1-L2 to restrict peak search to that region
+        3. Run :CALCulate:MARKer:MAXimum — places moving marker on peak
+        4. Read back the peak level via :CALCulate:MARKer:Y? 0
+        5. Compare against threshold
+
+        :param marker1_nm:    Left boundary in nm.
+        :param marker2_nm:    Right boundary in nm.
+        :param threshold_dBm: Power threshold in dBm (default -40.0).
+                            Anything above this is considered a signal.
+        :param trace:         Trace to search (default "TRA").
+        :returns:             True if a peak above threshold is found.
+
+        Manual ref:
+        :CALCulate:LMARker:SRANge ON      — restrict search to L1-L2
+        :CALCulate:MARKer:MAXimum         — peak search → moving marker
+        :CALCulate:MARKer:Y? 0            — read moving marker level
+        """
+        # Step 1 — set the search region via line markers
+        self.set_line_marker(1, marker1_nm * 1e-9)
+        self.set_line_marker(2, marker2_nm * 1e-9)
+
+        # Step 2 — restrict peak search to L1-L2 region
+        self.set_analysis_range("markers")
+
+        # Step 3 — activate moving marker and run peak search
+        self.write(f":TRACe:ACTive {trace}")
+        self.write(":CALCulate:MARKer:STATe 0,ON")   # enable moving marker
+        self.write(":CALCulate:MARKer:MAXimum")       # place it on the peak
+
+        # Step 4 — read peak level from moving marker
+        raw = self.ask(":CALCulate:MARKer:Y? 0")
+        try:
+            peak_dBm = float(raw)
+        except ValueError:
+            if self.verbose:
+                print(f"  Signal detection: invalid response {raw!r}")
+            return False
+
+        # Step 5 — read peak wavelength (for logging)
+        raw_wl = self.ask(":CALCulate:MARKer:X? 0")
+        try:
+            peak_nm = float(raw_wl) * 1e9
+        except ValueError:
+            peak_nm = float("nan")
+
+        # Step 6 — compare against threshold
+        detected = peak_dBm > threshold_dBm
+
+        if self.verbose:
+            print(f"  Signal detection [{marker1_nm:.1f}–{marker2_nm:.1f} nm]: "
+                f"peak = {peak_dBm:.2f} dBm @ {peak_nm:.3f} nm — "
+                f"{'DETECTED' if detected else 'NOT DETECTED'} "
+                f"(threshold = {threshold_dBm:.1f} dBm)")
+
+        # Step 7 — restore full analysis range
+        self.set_analysis_range("full")
+
+        return detected
 
 
 if __name__ == "__main__":
