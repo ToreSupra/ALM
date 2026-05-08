@@ -25,7 +25,10 @@ class Device(ctypes.Structure):
 
 # --- 3. Load the DLL ---
 try:
-    lib = ctypes.CDLL("./da100_driver.dll")
+    from pathlib import Path
+    script_dir = Path(__file__).parent.absolute()
+    dll_path = script_dir / "da100_driver.dll"
+    lib = ctypes.CDLL(str(dll_path))
 except OSError as e:
     print(f"Could not load DLL: {e}")
     exit()

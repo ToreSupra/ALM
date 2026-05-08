@@ -4,6 +4,8 @@
 
 In order to communicate with the laser using a USB port a new driver needs to be installed on the user’s computer. The driver is the Silicon Labs USB to UART bridge. Installation applications for different Windows operating systems are located at Silicon Labs website (https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers, CP210x VCP Driver).
 
+You need the dll driver file and add it to the folder Skyline.
+
 ## Yokogawa OSA
 
 The Yokogawa needs to be configured for an Ethernet connection.
@@ -25,6 +27,8 @@ You need to install the "Optical Parameter Monitor" from Thorlabs.
 ## OZOptics attenuator
 
 This device requires the same USB driver as the Skyline.
+
+You need the dll driver file and add it to the folder DA100.
 
 ## Visual Studio code
 
