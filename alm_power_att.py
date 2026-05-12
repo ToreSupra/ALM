@@ -26,9 +26,9 @@ import time
 import ipaddress
 
 from pymeasure.instruments.thorlabs import ThorlabsPM100USB
-from skyline import SkylineDevice, InterfaceType
-from Tests.TestFindThorlabs import find_thorlabs_pm100
-from da100 import DA100Device
+from Skyline.skyline import SkylineDevice, InterfaceType
+from Thorlabs.FindThorlabs import find_thorlabs_pm100
+from DA100.da100 import DA100Device
 
 # ---------------------------------------------------------------------------
 # State enum

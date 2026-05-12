@@ -558,7 +558,7 @@ def state_increase_attenuation(ctx: Context) -> State:
         print(f"=== INCREASE_ATT ({ctx.att_att} dB) ===")
         ctx.ws.cell(row=ctx.ws_row, column=1, value="Attenuation")
         ctx.ws.cell(row=ctx.ws_row, column=2, value=ctx.att_att)
-        ctx.ws_row += 1
+        ctx.ws_row += 3
 
         ctx.step = 0
     
