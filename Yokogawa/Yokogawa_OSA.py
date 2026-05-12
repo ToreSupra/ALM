@@ -582,26 +582,42 @@ class AQ6375Lan(AQ6375):
         # Step 2 — restrict peak search to L1-L2 region
         self.set_analysis_range("markers")
 
-        # Step 3 — activate moving marker and run peak search
-        self.write(f":TRACe:ACTive {trace}")
-        self.write(":CALCulate:MARKer:STATe 0,ON")   # enable moving marker
-        self.write(":CALCulate:MARKer:MAXimum")       # place it on the peak
+        trace = trace.strip().upper()
+        if trace not in self.VALID_TRACES:
+            raise ValueError(f"Invalid trace {trace!r}. Choose from: {self.VALID_TRACES}")
 
-        # Step 4 — read peak level from moving marker
-        raw = self.ask(":CALCulate:MARKer:Y? 0")
-        try:
-            peak_dBm = float(raw)
-        except ValueError:
+        # Step 1 — select active trace
+        self.write(f":TRACe:ACTive {trace}")
+
+        # Step 2 — select WDM analysis (OSNR not available on AQ6375)
+        self.write(":CALCulate:CATegory WDM")
+
+        # Step 3 — execute analysis
+        self.write(":CALCulate")
+
+        # Step 4 — check how many channels were detected
+        n_channels = int(self.ask(":CALCulate:DATA:NCHannels?"))
+        if self.verbose:
+            print(f"  WDM channels detected: {n_channels}")
+
+        if n_channels == 0:
             if self.verbose:
-                print(f"  Signal detection: invalid response {raw!r}")
+                print("  Warning: no channels detected — check threshold and trace")
             return False
 
-        # Step 5 — read peak wavelength (for logging)
-        raw_wl = self.ask(":CALCulate:MARKer:X? 0")
-        try:
-            peak_nm = float(raw_wl) * 1e9
-        except ValueError:
-            peak_nm = float("nan")
+        # Step 5 — retrieve SNR for each channel
+        raw_power = self.ask(":CALCulate:DATA:CPOWers?")
+        power_values = [float(v) for v in raw_power.split(",")] # dBm
+
+        raw_wl = self.ask(":CALCulate:Data:CWAVelengths?")
+        wl_values = [float(v) for v in raw_wl.split(",")] # nm
+
+        if self.verbose:
+            for i, power in enumerate(power_values):
+                print(f"  Channel {i+1}: Peak = {power:.2f} dB")
+        
+        peak_dBm = max(power_values)
+        peak_nm = power_values.index(peak_dBm)
 
         # Step 6 — compare against threshold
         detected = peak_dBm > threshold_dBm
