@@ -27,8 +27,8 @@ import time
 import numpy as np
 
 from pymeasure.instruments.thorlabs import ThorlabsPM100USB
-from skyline import SkylineDevice, InterfaceType
-from Tests.TestFindThorlabs import find_thorlabs_pm100
+from Skyline.skyline import SkylineDevice, InterfaceType
+from Thorlabs.FindThorlabs import find_thorlabs_pm100
 
 # ---------------------------------------------------------------------------
 # State enum
@@ -251,7 +251,7 @@ def state_check_powermeter(ctx: Context) -> State:
         ctx.pm.wavelength = ctx.pm_wl
 
     ctx.ws.cell(row=ctx.ws_row, column=1, value="Power meter info")
-    ctx.ws.cell(row=ctx.ws_row, column=2, value=f"{ctx.pm.id},{ctx.pm.name},{pm.sensor_name},{pm.sensor_sn}")
+    ctx.ws.cell(row=ctx.ws_row, column=2, value=f"{ctx.pm.id},{ctx.pm.name},{ctx.pm.sensor_name},{ctx.pm.sensor_sn}")
     ctx.ws_row += 1
 
     return State.CHECK_LASER

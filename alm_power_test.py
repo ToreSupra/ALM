@@ -30,7 +30,7 @@ import numpy as np
 
 from pymeasure.instruments.thorlabs import ThorlabsPM100USB
 from pymeasure.instruments.yokogawa.aq6370series import AQ6375B
-from skyline import SkylineDevice
+from Skyline.skyline import SkylineDevice
 
 # ---------------------------------------------------------------------------
 # State enum
