@@ -93,7 +93,7 @@ class Context:
     osa_port:           int = 10001
     osa_coarse_min_wl:  float = 1500.0
     osa_coarse_max_wl:  float = 1900.0
-    osa_coarse_sens:    str = "HIGH1"
+    osa_coarse_sens:    str = "MID"
     osa_coarse_res:     float = 1.0
     osa_coarse_mk1:     float = 1550.0
     osa_coarse_mk2:     float = 1555.0
@@ -422,8 +422,8 @@ def state_check_osa(ctx: Context) -> State:
     ctx.ws.cell(row=ctx.ws_row, column=2, value=f"{ctx.osa_coarse_mk1},{ctx.osa_coarse_mk2}")
     ctx.ws_row += 1
 
+    ctx.osa.get_zero_status()
     ctx.osa.set_auto_zero(False)
-    ctx.osa.zero_once()
     ctx.osa.wavelength_start     = ctx.osa_coarse_min_wl * 1e-9
     ctx.osa.wavelength_stop      = ctx.osa_coarse_max_wl * 1e-9
     ctx.osa.resolution_bandwidth = ctx.osa_coarse_res * 1e-9
@@ -476,7 +476,11 @@ def state_warmup_laser(ctx: Context) -> State:
         ctx.P3_current = 0.0
     
     print(f"=== WARMUP_LASER ({ctx.warmup_time} s) ===")
+    ctx.osa.zero_once()
     time.sleep(ctx.warmup_time) # Time in seconds
+    while ctx.osa.get_zero_status():
+        time.sleep(0.2)
+    
 
     return State.RAMPUP_LASER
 
@@ -493,8 +497,10 @@ def state_rampup_laser(ctx: Context) -> State:
 
 def state_wait(ctx: Context) -> State:
     print(f"=== WAIT ({ctx.settling_time} s) ===")
+    ctx.osa.zero_once()
     time.sleep(ctx.settling_time) # Time in seconds
-
+    while ctx.osa.get_zero_status():
+        time.sleep(0.2)
     return State.MEASURE_POWER
 
 def state_measure_power(ctx: Context) -> State:

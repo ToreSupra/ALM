@@ -464,11 +464,14 @@ class AQ6375Lan(AQ6375):
 
         Manual ref: :CALibration:ZERO[:AUTO]:STATus?
         """
-        response = self.ask(":CALibration:ZERO:STATus?")
-        running = response.strip() == "1"
-        if self.verbose:
-            print(f"Zero calibration {'in progress' if running else 'idle'}")
-        return running
+        timeout_val = self.adapter.connection.timeout
+        self.adapter.connection.timeout = 60000
+        self.ask("*OPC?")
+        #running = response.strip() == "1"
+        self.adapter.connection.timeout = timeout_val
+        #if self.verbose:
+            #print(f"Zero calibration {'in progress' if running else 'idle'}")
+        return False;
     
     def calculate_wdm_snr(self, trace: str = "TRA") -> list[float]:
         """
